@@ -4,7 +4,7 @@ supported_targets:
 
 extensions:
   avocado-bsp-imx93-frdm:
-    version: 2024.1.0
+    version: 0.1.0
     release: r0
     summary: Board support for the i.MX 93 FRDM
     description: Board support for the i.MX 93 FRDM
