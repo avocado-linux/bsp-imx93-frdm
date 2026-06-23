@@ -17,6 +17,7 @@ jobs:
       matrix:
         include:
           - { target: imx93-frdm, distro-release: "2026", distro-channel: edge }
+          - { target: imx93-frdm, distro-release: "2024", distro-channel: edge-next }
     uses: avocado-linux/actions/.github/workflows/extension-release.yml@v1
     with:
       target:         ${{ matrix.target }}
