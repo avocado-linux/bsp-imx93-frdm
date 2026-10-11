@@ -4,7 +4,7 @@ supported_targets:
 
 extensions:
   avocado-bsp-imx93-frdm:
-    version: 0.1.0
+    version: 0.2.0
     release: r0
     summary: Board support for the i.MX 93 FRDM
     description: Board support for the i.MX 93 FRDM
@@ -18,6 +18,47 @@ extensions:
       - udevadm trigger --type=devices --action=add --settle
 
     packages:
+
+# What a hub does with the FRDM's Rubicon around `avocado provision
+# --rubicon` (and `avocado rubicon run`). A project replaces one by defining
+# a run profile of the same name. The Rubicon's outputs are generic; on this
+# target they are wired (README):
+#   power  a power relay feeding the board's USB-C PD adapter
+#   ssr1   a photo relay across SW1-1 (BOOT_MODE0); SW1 is left all off
+#   ssr2   a photo relay across SW1-2 (BOOT_MODE1)
+#   ssr3   a photo relay across P19 (SYS_nRST)
+#   SDWire3 on the Rubicon's USB port, its tongue in the microSD slot (P13)
+rubicon:
+  run:
+    imx93-power-off:
+      - out: { power: "off" }
+    imx93-power-on:
+      - out: { power: "on" }
+    # SW1[3:0]: 0011 microSD, 0010 eMMC, 0001 USB serial download.
+    imx93-boot-sd:
+      - out: { ssr1: "on", ssr2: "on" }
+    imx93-boot-emmc:
+      - out: { ssr1: "off", ssr2: "on" }
+    imx93-boot-serial-download:
+      - out: { ssr1: "on", ssr2: "off" }
+    imx93-reset:
+      - pulse: { ssr3: 200 }
+    # Before the sd profile: the board off, its card in the SDWire3 handed to
+    # the hub, where stone's sd profile writes the image to it.
+    imx93-sd-write:
+      - run: imx93-power-off
+      - wait_ms: 1000
+      - sd_mux: host
+    # After it: the card back in the board, set to boot from it, power on.
+    imx93-sd-boot:
+      - sd_mux: dut
+      - run: imx93-boot-sd
+      - wait_ms: 500
+      - run: imx93-power-on
+
+provision:
+  sd:
+    rubicon: { before: imx93-sd-write, after: imx93-sd-boot }
 
 sdk:
   image: docker.io/avocadolinux/sdk:{{ env.AVOCADO_DISTRO_RELEASE }}
