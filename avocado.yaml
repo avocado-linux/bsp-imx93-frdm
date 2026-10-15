@@ -13,11 +13,43 @@ extensions:
     vendor: Avocado Linux <info@avocadolinux.org>
 
     on_merge:
+      # modules-load.d files that arrive with the extension (moal's, below)
+      # were not there when systemd-modules-load ran at boot; run it again.
+      - systemctl restart systemd-modules-load.service
       - udevadm control --reload
       - udevadm trigger --type=subsystems --action=add --settle
       - udevadm trigger --type=devices --action=add --settle
 
+    # Drivers the board's device tree enables that the kernel builds as
+    # modules. avocado-cli suffixes kernel-module names with the kernel
+    # version at install time. Without them the parts below are described
+    # but never bound (no CAN, Wi-Fi, Bluetooth, external RTC or audio).
     packages:
+      # CAN: FlexCAN with the on-board transceiver.
+      kernel-module-flexcan: '*'
+      kernel-module-can-dev: '*'
+      # External RTC (PCF2131 on I2C).
+      kernel-module-rtc-pcf2127: '*'
+      # On-board IW612 module (the driver reports card type 0x109 and asks for
+      # nxp/sduart_nw61x_v1.bin.se; the device tree's Bluetooth node still says
+      # 88w8987): Wi-Fi on SDIO through NXP's moal/mlan driver, Bluetooth on
+      # UART through btnxpuart. moal has no SDIO device table, so udev never
+      # loads it: its package's modules-load.d entry does (see on_merge).
+      kernel-module-moal: '*'
+      kernel-module-mlan: '*'
+      kernel-module-cfg80211: '*'
+      kernel-module-btnxpuart: '*'
+      kernel-module-bluetooth: '*'
+      firmware-nxp-wifi-nxp-common: '*'
+      firmware-nxp-wifi-nxpiw612-sdio: '*'
+      # regulatory.db for cfg80211; without it Wi-Fi stays on the world domain
+      # and the kernel logs a failed firmware load at boot.
+      wireless-regdb-static: '*'
+      # Audio: the MQS output through SAI, as the sound-mqs card.
+      kernel-module-snd-soc-fsl-asoc-card: '*'
+      kernel-module-snd-soc-fsl-mqs: '*'
+      kernel-module-snd-soc-fsl-sai: '*'
+      kernel-module-snd-soc-fsl-utils: '*'
 
 # What a hub does with the FRDM's Rubicon around `avocado provision
 # --rubicon` (and `avocado rubicon run`). A project replaces one by defining
@@ -58,15 +90,17 @@ rubicon:
       - run: imx93-power-on
 
     # Before the uuu-emmc profile: the board power-cycled into USB serial
-    # download. The ROM reads the boot mode only at power-up. Hold every
-    # device on the Rubicon's USB port: the ROM (SDPS, 1fc9:014e), then the
-    # U-Boot uuu loads, which re-enumerates for fastboot and writes the eMMC.
+    # download. The ROM reads the boot mode only at power-up. Hold every id
+    # the flash goes through: the ROM (SDPS, 1fc9:014e), an SPL that streams
+    # U-Boot over SDP (SDPV, 1fc9:0151), and U-Boot's fastboot (1fc9:0152),
+    # which writes the eMMC. Not "*": the board's debug port (a CH342 on the
+    # same Rubicon USB port) is the console, and holding it takes it away.
     imx93-enter-serial-download:
       - run: imx93-power-off
       - run: imx93-boot-serial-download
       - wait_ms: 3000
       - run: imx93-power-on
-      - hold_usb: ["*"]
+      - hold_usb: ["1fc9:014e", "1fc9:0151", "1fc9:0152"]
       - wait_usb: { id: "1fc9:014e", timeout_s: 30 }
     # After it: set to boot from eMMC and power-cycle.
     imx93-emmc-boot:

@@ -12,6 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `avocado provision --rubicon --profile sd`: the hub powers the board
   off, takes its card through an SDWire3 (`sd_mux`), writes the image with
   stone's `sd` profile, hands the card back and boots from it.
+- The drivers and firmware for the parts the board's device tree enables but
+  the kernel builds as modules: CAN (flexcan), the external RTC (PCF2131),
+  the IW612 Wi-Fi (NXP moal/mlan plus its firmware) and Bluetooth
+  (btnxpuart), and MQS audio. Before, none of them bound. Also
+  wireless-regdb-static, and `on_merge` re-runs systemd-modules-load so
+  moal, which has no device table for udev, loads from its modules-load.d.
 - `avocado provision --rubicon --profile uuu-emmc`: the hub power-cycles the
   board into USB serial download (`1fc9:014e` on P2), uuu writes the eMMC,
   then the board boots from it. Needs only the power relay and `ssr1`/`ssr2`
