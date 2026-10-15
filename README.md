@@ -44,10 +44,23 @@ outputs:
 | `ssr1` (D3) | photo relay | across SW1-1, BOOT_MODE0 |
 | `ssr2` (D7) | photo relay | across SW1-2, BOOT_MODE1 |
 | `ssr3` (D8) | photo relay | across P19, SYS_nRST |
-| USB port | SDWire3 | its tongue in the microSD slot (P13) |
+| USB port | SDWire3, or the P2 USB device port | SDWire3: its tongue in the microSD slot (P13), for `sd`. P2: for `uuu-emmc` |
 
 Leave SW1 all off: the relays set the boot mode (SW1[3:0] 0011 microSD,
-0010 eMMC, 0001 USB serial download).
+0010 eMMC, 0001 USB serial download). A SOIC-8 test clip over SW1 reaches
+SW1-1 and SW1-2 without soldering.
+
+### Writing the image to the eMMC
+
+```sh
+avocado provision --rubicon <board> --profile uuu-emmc
+```
+
+Needs only `power`, `ssr1` and `ssr2` (and P2 on the Rubicon's USB port).
+The hub power-cycles the board into USB serial download (`1fc9:014e`),
+stone's `uuu-emmc` profile loads U-Boot and writes the eMMC over fastboot,
+then the hub sets eMMC boot and power-cycles it. P1 is power only; never
+put the download cable there.
 
 ### Writing the image to the microSD card
 

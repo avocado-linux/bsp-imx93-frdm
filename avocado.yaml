@@ -28,6 +28,7 @@ extensions:
 #   ssr2   a photo relay across SW1-2 (BOOT_MODE1)
 #   ssr3   a photo relay across P19 (SYS_nRST)
 #   SDWire3 on the Rubicon's USB port, its tongue in the microSD slot (P13)
+#     (sd profile), or the P2 USB device port on it (uuu-emmc profile)
 rubicon:
   run:
     imx93-power-off:
@@ -56,9 +57,29 @@ rubicon:
       - wait_ms: 500
       - run: imx93-power-on
 
+    # Before the uuu-emmc profile: the board power-cycled into USB serial
+    # download. The ROM reads the boot mode only at power-up. Hold every
+    # device on the Rubicon's USB port: the ROM (SDPS, 1fc9:014e), then the
+    # U-Boot uuu loads, which re-enumerates for fastboot and writes the eMMC.
+    imx93-enter-serial-download:
+      - run: imx93-power-off
+      - run: imx93-boot-serial-download
+      - wait_ms: 3000
+      - run: imx93-power-on
+      - hold_usb: ["*"]
+      - wait_usb: { id: "1fc9:014e", timeout_s: 30 }
+    # After it: set to boot from eMMC and power-cycle.
+    imx93-emmc-boot:
+      - run: imx93-power-off
+      - run: imx93-boot-emmc
+      - wait_ms: 3000
+      - run: imx93-power-on
+
 provision:
   sd:
     rubicon: { before: imx93-sd-write, after: imx93-sd-boot }
+  uuu-emmc:
+    rubicon: { before: imx93-enter-serial-download, after: imx93-emmc-boot }
 
 sdk:
   image: docker.io/avocadolinux/sdk:{{ env.AVOCADO_DISTRO_RELEASE }}
