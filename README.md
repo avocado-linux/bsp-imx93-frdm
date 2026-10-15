@@ -47,8 +47,11 @@ outputs:
 | USB port | SDWire3, or the P2 USB device port | SDWire3: its tongue in the microSD slot (P13), for `sd`. P2: for `uuu-emmc` |
 
 Leave SW1 all off: the relays set the boot mode (SW1[3:0] 0011 microSD,
-0010 eMMC, 0001 USB serial download). A SOIC-8 test clip over SW1 reaches
-SW1-1 and SW1-2 without soldering.
+0010 eMMC, 0001 USB serial download). Solder the relay leads to SW1's
+pads: a SOIC test clip over the switch did not make reliable contact on the
+bench. Check each relay really reaches SW1: with both closed the board must
+not boot from eMMC (0011 is microSD), and 0000 falls back to serial download
+on an unfused part, so serial download alone proves nothing.
 
 ### Writing the image to the eMMC
 

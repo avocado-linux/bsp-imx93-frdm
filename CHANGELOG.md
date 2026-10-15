@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `avocado provision --rubicon --profile uuu-emmc`: the hub power-cycles the
   board into USB serial download (`1fc9:014e` on P2), uuu writes the eMMC,
   then the board boots from it. Needs only the power relay and `ssr1`/`ssr2`
-  on SW1 (a SOIC clip over the switch works), no SDWire3.
+  on SW1, no SDWire3.
 
 ## [0.1.0]
 
