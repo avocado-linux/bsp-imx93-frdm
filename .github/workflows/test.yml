@@ -12,6 +12,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - { target: imx93-frdm, distro-release: "2026", distro-channel: next }
           - { target: imx93-frdm, distro-release: "2024", distro-channel: next }
     uses: avocado-linux/actions/.github/workflows/extension-test.yml@v1
     with:
