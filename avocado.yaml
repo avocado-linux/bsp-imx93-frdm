@@ -9,7 +9,7 @@ extensions:
     summary: Board support for the i.MX 93 FRDM
     description: Board support for the i.MX 93 FRDM
     license: Apache-2.0
-    url: https://github.com/avocadolinux/avocado-os
+    url: https://github.com/avocado-linux/bsp-imx93-frdm
     vendor: Avocado Linux <info@avocadolinux.org>
 
     on_merge:
